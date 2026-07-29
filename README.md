@@ -1,46 +1,76 @@
-# Credit Delinquency Early Warning System (EWS)
+# 💳 Credit Delinquency Early Warning System (EWS)
 
-End-to-end pipeline to predict delinquency risk using **LightGBM**, calibrated probabilities, threshold tuning, and **SHAP explainability** with reason codes.
+Welcome! 👋 This repository contains a complete, student-friendly Machine Learning project that predicts whether a bank customer will miss their credit card or loan payments in the near future.
 
-## ✨ Core Features
-- Leakage-safe training (drops known leaky columns)
-- Safe feature engineering (repayment stress + behavior signals)
-- LightGBM champion model + class imbalance handling (`scale_pos_weight`)
-- Probability calibration (Isotonic)
-- Threshold sweep for best precision/recall operating point
-- Metrics: ROC-AUC, KS, Brier, Lift@Top10%, Recall@FPR=20%
-- Challenger baseline: Logistic Regression (scaled + OHE)
-- Leakage sanity check: no-lag model
-- Explainability: SHAP summary + top reason codes per customer
+By catching risk **early**, banks can reach out to customers to help them structure payments before they default.
 
 ---
 
-## 🧠 Feature Engineering
+## 🌟 What is this project about?
 
-> `eps = 1e-9` added to avoid division-by-zero.
+Imagine you run a bank. Some customers take credit cards or loans. Most pay on time, but a few face financial trouble and stop paying. 
 
-| Feature | Formula | Meaning |
-|--------|---------|---------|
-| `log_income` | `log(1 + monthly_gross_income)` | Normalizes income scale and reduces outlier impact |
-| `emi_stress_ratio_safe` | `emi_amount / (net_disposable_income + eps)` | Measures repayment burden vs disposable income |
-| `bounce_frequency_ratio_safe` | `auto_debit_bounce_count / (auto_debit_attempt_count + eps)` | Captures payment discipline / bounce intensity |
-| `outstanding_balance_ratio_safe` | `outstanding_balance / (loan_amount + eps)` | Measures how much of the loan is still outstanding |
-| `utilization_shock_safe` | `1[(out_bal_lag1 - out_bal_lag2)/(out_bal_lag2+eps) > 0.2]` | Flags sudden jump in utilization/outstanding balance |
-| `rolling_dpd_trend_safe` | `(dpd_lag1 - dpd_lag4) / 3` | 3-month delinquency trend (improving vs worsening) |
-| `delinquency_acceleration_safe` | `dpd_lag1 - dpd_lag2` | Detects recent acceleration in delinquency |
-| `payment_volatility_safe` | `std(pay_lag1,pay_lag2,pay_lag3) / (mean(...) + eps)` | Measures instability in repayment amounts |
-| `pay_to_due_ratio_3m_safe` | `(pay1+pay2+pay3) / (due1+due2+due3 + eps)` | Tracks repayment coverage vs obligations (3 months) |
-| `repayment_fatigue_safe` | `repayment_fatigue_index` | Uses fatigue index directly as a stress signal |
-| `exposure_concentration_safe` | `total_credit_exposure / (loan_amount + eps)` | Measures external exposure pressure vs this loan |
-| `behavioral_risk_score_safe` | `avg(trend, bounce, emi_stress, volatility)` | Composite behavioral risk indicator from safe signals |
+- **The Problem:** If a bank waits until a customer has already stopped paying for 90 days, it is often too late to recover the money.
+- **The Solution (EWS):** An **Early Warning System (EWS)** acts like a financial smoke detector. It analyzes payment patterns, credit usage, and income stress to spot warning signs **before** a default happens.
 
 ---
 
-## 📁 Inputs
-- `File01_Delinquency_ews_Model.csv` (training)
-- `File02_Delinquency_ews_20k_1_Test_Model.csv` (testing + threshold tuning)
-- `File03_Delinquency_ews_20k_2_Bus_Validate.csv` (final scoring)
+## 🚀 Key Features at a Glance
 
-## 📦 Output
-Generates:
-- `File04_Delinquency_Results_Submit_Final.csv` with `customer_id` and `ews_flag`
+1. **🛡️ Data Leakage Prevention:** Drops future/hidden signals that real bank systems wouldn't have at prediction time.
+2. **🧮 Safe Feature Engineering:** Calculates repayment stress ratios safely without division-by-zero crashes.
+3. **⚡ LightGBM Champion Model:** Fast gradient boosting algorithm optimized for handling imbalanced financial data.
+4. **🎯 Probability Calibration (Isotonic Regression):** Converts raw machine learning scores into accurate real-world percentages (e.g., "75% chance of delinquency").
+5. **⚙️ Threshold Sweep Tuning:** Finds the optimal cutoff point to catch maximum defaults while minimizing false alarms.
+6. **🚦 Business Rule Overlay:** Combines AI model predictions with real-world banking rules for safety.
+7. **💡 Reason Codes (SHAP Explainability):** Tells bank officers *why* a customer was flagged (e.g., "High EMI burden + auto-debit bounce").
+
+---
+
+## 📂 Project Structure
+
+```text
+├── Credit_card_delinquency_ews_system.ipynb  # Primary Python notebook with end-to-end ML pipeline
+├── data analysis.ipynb                       # Exploratory Data Analysis (EDA) & distribution checks
+├── File01_Delinquency_ews_Model.csv          # Training dataset (80,000 records)
+├── File02_Delinquency_ews_20k_1_Test_Model.csv # Test dataset for threshold tuning (20,000 records)
+├── File03_Delinquency_ews_20k_2_Bus_Validate.csv # Business validation dataset (20,000 records)
+├── File04_Delinquency_Results_Submit_Final.csv # Final predictions output file
+├── DOCUMENTATION.md                          # Detailed technical documentation & system architecture
+└── INTERVIEW_NOTES.md                       # Comprehensive guide for job interview prep
+```
+
+---
+
+## 🛠️ Tech Stack & Requirements
+
+- **Language:** Python 3.9+
+- **Data Wrangling:** `pandas`, `numpy`
+- **Machine Learning:** `lightgbm`, `scikit-learn`
+- **Model Explainability:** `shap`
+- **Data Visualization:** `matplotlib`, `seaborn`
+
+---
+
+## ⚡ How to Run
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/-Credit-Delinquency-Early-Warning-System.git
+   cd -Credit-Delinquency-Early-Warning-System
+   ```
+
+2. **Install required packages:**
+   ```bash
+   pip install pandas numpy lightgbm scikit-learn shap matplotlib seaborn
+   ```
+
+3. **Run the main pipeline notebook:**
+   Open and run `Credit_card_delinquency_ews_system.ipynb` in Jupyter Notebook or VS Code. It will train the model, calibrate probabilities, perform threshold tuning, generate SHAP reason codes, and save the final predictions to `File04_Delinquency_Results_Submit_Final.csv`.
+
+---
+
+## 📘 Further Reading & Documentation
+
+- For in-depth technical architecture, mathematical formulas, and internal workflow diagrams, read [DOCUMENTATION.md](file:///c:/Users/ishan/OneDrive/Documents/GITHUB/-Credit-Delinquency-Early-Warning-System/DOCUMENTATION.md).
+- Preparing for Data Science, Machine Learning, or Financial Analytics interviews? Check out [INTERVIEW_NOTES.md](file:///c:/Users/ishan/OneDrive/Documents/GITHUB/-Credit-Delinquency-Early-Warning-System/INTERVIEW_NOTES.md).
